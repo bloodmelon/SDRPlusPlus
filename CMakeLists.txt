@@ -100,11 +100,54 @@ set(SDRPP_MODULE_COMPILER_FLAGS ${SDRPP_COMPILER_FLAGS})
 
 # Set a default install prefix
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    if (MSVC)
+        set(CMAKE_INSTALL_PREFIX "C:/Program Files/SDR++/" CACHE PATH "..." FORCE)
+    elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "..." FORCE)
     else()
         set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "..." FORCE)
     endif()
+endif()
+
+# Include standard install directory definitions
+include(GNUInstallDirs)
+
+# Set up SDR++ directory load paths
+if (MSVC)
+    set(SDRPP_MODULES_LOAD_DIR "./modules")
+    set(SDRPP_RES_LOAD_DIR "./res")
+elseif (USE_BUNDLE_DEFAULTS)
+    set(SDRPP_MODULES_LOAD_DIR "../Plugins")
+    set(SDRPP_RES_LOAD_DIR "../Resources")
+elseif (ANDROID)
+    set(SDRPP_MODULES_LOAD_DIR "/modules")
+    set(SDRPP_RES_LOAD_DIR "/res")
+else()
+    set(SDRPP_MODULES_LOAD_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/sdrpp/plugins")
+    set(SDRPP_RES_LOAD_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATAROOTDIR}/sdrpp")
+endif()
+
+# Set up SDR++ directory install paths
+if (MSVC)
+    set(SDRPP_BIN_INSTALL_DIR "/")
+    set(SDRPP_LIB_INSTALL_DIR "/")
+    set(SDRPP_MODULES_INSTALL_DIR "modules")
+    set(SDRPP_RES_INSTALL_DIR "res")
+elseif (USE_BUNDLE_DEFAULTS)
+    set(SDRPP_BIN_INSTALL_DIR "Contents/MacOS")
+    set(SDRPP_LIB_INSTALL_DIR "Contents/Frameworks")
+    set(SDRPP_MODULES_INSTALL_DIR "Contents/Plugins")
+    set(SDRPP_RES_INSTALL_DIR "Contents/Resources")
+elseif (ANDROID)
+    set(SDRPP_BIN_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}")
+    set(SDRPP_LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
+    set(SDRPP_MODULES_INSTALL_DIR "/modules")
+    set(SDRPP_RES_INSTALL_DIR "/res")
+else()
+    set(SDRPP_BIN_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}")
+    set(SDRPP_LIB_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
+    set(SDRPP_MODULES_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/sdrpp/plugins")
+    set(SDRPP_RES_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/sdrpp")
 endif()
 
 # Configure toolchain for android
@@ -378,17 +421,18 @@ endif ()
 # Create module cmake file
 configure_file(${CMAKE_SOURCE_DIR}/sdrpp_module.cmake ${CMAKE_CURRENT_BINARY_DIR}/sdrpp_module.cmake @ONLY)
 
-# Install directives
-install(TARGETS sdrpp DESTINATION bin)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/bandplans DESTINATION share/sdrpp)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/colormaps DESTINATION share/sdrpp)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/fonts DESTINATION share/sdrpp)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/icons DESTINATION share/sdrpp)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/themes DESTINATION share/sdrpp)
+# Create desktop entry file
 configure_file(${CMAKE_SOURCE_DIR}/sdrpp.desktop ${CMAKE_CURRENT_BINARY_DIR}/sdrpp.desktop @ONLY)
 
+# Install directives
+install(TARGETS sdrpp DESTINATION ${SDRPP_BIN_INSTALL_DIR})
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/bandplans DESTINATION ${SDRPP_RES_INSTALL_DIR})
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/colormaps DESTINATION ${SDRPP_RES_INSTALL_DIR})
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/fonts DESTINATION ${SDRPP_RES_INSTALL_DIR})
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/icons DESTINATION ${SDRPP_RES_INSTALL_DIR})
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/root/res/themes DESTINATION ${SDRPP_RES_INSTALL_DIR})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sdrpp.desktop DESTINATION share/applications)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/sdrpp.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
 endif ()
 
 # Create uninstall target
